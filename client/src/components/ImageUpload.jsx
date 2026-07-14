@@ -44,7 +44,12 @@ export function ImageUpload({ value, onChange, className = "" }) {
       if (!res.ok) throw new Error(data.error || "Upload failed");
       
       // Store the relative path returned from the server (e.g. /uploads/image.png)
-      onChange(data.url);
+      const apiBase =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+      const baseUrl = apiBase.replace("/api", "");
+
+      onChange(`${baseUrl}${data.url}`);
     } catch (err) {
       setError(err.message);
     } finally {
