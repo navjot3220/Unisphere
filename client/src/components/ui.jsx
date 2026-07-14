@@ -1,16 +1,25 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, NavLink, useNavigate, Navigate } from "react-router-dom";
+import { api } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { Avatar } from "./Avatar.jsx";
+
+export const DEFAULT_COVERS = {
+  technology: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
+  business: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80",
+  arts: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=800&q=80",
+  general: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80"
+};
+
+export function getCoverImage(customImage, category) {
+  if (customImage) return customImage;
+  return DEFAULT_COVERS[category?.toLowerCase()] || DEFAULT_COVERS.general;
+}
 
 export const CATEGORY_COLORS = {
-  tech: "bg-violet2/10 text-violet2",
-  cultural: "bg-pink-100 text-pink-700",
-  sports: "bg-leaf/10 text-leaf",
-  academic: "bg-sky-100 text-sky-700",
-  career: "bg-amber-100 text-amber-700",
+  technology: "bg-violet2/10 text-violet2",
+  business: "bg-amber-100 text-amber-700",
   arts: "bg-fuchsia-100 text-fuchsia-700",
-  social: "bg-orange-100 text-orange-700",
-  workshop: "bg-indigo-100 text-indigo-700",
 };
 
 export function CategoryBadge({ category }) {
@@ -42,6 +51,32 @@ export function Navbar() {
   const dash =
     user?.role === "admin" ? "/admin" : user?.role === "faculty" ? "/faculty" : "/dashboard";
 
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifs, setShowNotifs] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      api.get("/notifications").then(d => setNotifications(d.notifications)).catch(()=>{});
+    }
+  }, [user]);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const markAsRead = async (id, e) => {
+    e.stopPropagation();
+    try {
+      await api.put(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+    } catch {}
+  };
+
+  const markAllRead = async () => {
+    try {
+      await api.put("/notifications/read-all");
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch {}
+  };
+
   return (
     <header className="sticky top-0 z-20 border-b border-ink/10 bg-paper/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
@@ -57,6 +92,32 @@ export function Navbar() {
           </NavLink>
           {user ? (
             <>
+              <div className="relative ml-2 mr-1 flex items-center">
+                <button onClick={() => setShowNotifs(!showNotifs)} className="relative p-1.5 text-ink/60 hover:text-ink rounded-lg hover:bg-ink/5">
+                  🔔
+                  {unreadCount > 0 && <span className="absolute top-1 right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border-2 border-white">{unreadCount}</span>}
+                </button>
+                {showNotifs && (
+                  <div className="absolute right-0 top-full mt-2 w-80 max-h-[80vh] overflow-y-auto rounded-2xl bg-white p-4 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] border border-ink/5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold text-base">Notifications</h3>
+                      {unreadCount > 0 && <button onClick={markAllRead} className="text-xs font-semibold text-violet2 hover:underline">Mark all read</button>}
+                    </div>
+                    {notifications.length === 0 ? (
+                      <p className="text-sm text-ink/50 text-center py-6">No notifications yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {notifications.map(n => (
+                          <div key={n._id} className={`p-3 rounded-xl text-sm cursor-pointer transition-colors ${n.isRead ? 'bg-ink/5 hover:bg-ink/10' : 'bg-violet2/10 hover:bg-violet2/20'}`} onClick={(e) => { markAsRead(n._id, e); navigate(`/clubs/${n.club?._id || n.club}`); setShowNotifs(false); }}>
+                            <p className={`font-medium ${n.isRead ? 'text-ink/80' : 'text-violet2'}`}>{n.message}</p>
+                            <p className="mt-1 text-[10px] text-ink/50">{formatWhen(n.createdAt)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <NavLink to={dash} className="rounded-lg px-3 py-1.5 hover:bg-ink/5">
                 Dashboard
               </NavLink>
@@ -69,6 +130,9 @@ export function Navbar() {
               >
                 Sign out
               </button>
+              <div className="ml-2 pl-4 border-l border-ink/10 flex items-center">
+                <Avatar src={user.profilePicture} name={user.name} className="h-8 w-8 text-xs" />
+              </div>
             </>
           ) : (
             <>
@@ -111,36 +175,46 @@ export function EmptyState({ title, hint, action }) {
 export function EventCard({ event, reasons, children }) {
   const spotsLeft = event.capacity - event.registeredCount;
   return (
-    <div className="card flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <CategoryBadge category={event.category} />
-        {event.club?.name && (
-          <span className="text-xs font-medium text-ink/50">{event.club.name}</span>
+    <Link to={`/events/${event._id}`} className="card !p-0 overflow-hidden flex flex-col hover:border-violet2/50 transition-colors cursor-pointer group">
+      <div className="h-40 w-full overflow-hidden relative">
+        <img 
+          src={getCoverImage(event.coverImage, event.category)} 
+          alt={event.title} 
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+          onError={(e) => { e.target.onerror = null; e.target.src = getCoverImage(null, event.category); }}
+        />
+        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+          <CategoryBadge category={event.category} />
+          {event.club?.name && (
+            <span className="inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-black/60 text-white backdrop-blur-sm shadow-sm max-w-[150px] truncate">{event.club.name}</span>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 p-5 flex-1">
+        <div>
+          <Link
+            to={`/events/${event._id}`}
+            className="font-display text-lg font-bold leading-snug hover:text-violet2 line-clamp-2"
+          >
+            {event.title}
+          </Link>
+          <p className="mt-1 text-sm text-ink/60">
+            {formatWhen(event.startsAt)} · {event.location}
+          </p>
+        </div>
+        {reasons?.length > 0 && (
+          <p className="rounded-lg bg-marigold/15 px-3 py-2 text-xs font-medium text-ink/80">
+            🎯 {reasons[0]}
+          </p>
         )}
+        <div className="mt-auto pt-2 flex items-center justify-between">
+          <span className={`text-xs font-semibold ${spotsLeft <= 5 ? "text-red-600" : "text-ink/50"}`}>
+            {spotsLeft <= 0 ? "Full" : `${spotsLeft} spots left`}
+          </span>
+          {children}
+        </div>
       </div>
-      <div>
-        <Link
-          to={`/events/${event._id}`}
-          className="font-display text-lg font-bold leading-snug hover:text-violet2"
-        >
-          {event.title}
-        </Link>
-        <p className="mt-1 text-sm text-ink/60">
-          {formatWhen(event.startsAt)} · {event.location}
-        </p>
-      </div>
-      {reasons?.length > 0 && (
-        <p className="rounded-lg bg-marigold/15 px-3 py-2 text-xs font-medium text-ink/80">
-          🎯 {reasons[0]}
-        </p>
-      )}
-      <div className="mt-auto flex items-center justify-between">
-        <span className={`text-xs font-semibold ${spotsLeft <= 5 ? "text-red-600" : "text-ink/50"}`}>
-          {spotsLeft <= 0 ? "Full" : `${spotsLeft} spots left`}
-        </span>
-        {children}
-      </div>
-    </div>
+    </Link>
   );
 }
 
@@ -178,12 +252,22 @@ export function TicketPass({ registration }) {
         <span className="absolute -bottom-3 -left-3.5 h-6 w-6 rounded-full bg-paper" />
       </div>
       <div className="flex w-36 flex-col items-center justify-center gap-1 bg-marigold p-3">
-        <img
-          src={registration.pass.qr}
-          alt={`QR pass for ${e.title}`}
-          className="w-full rounded-lg"
-        />
-        <p className="text-[9px] font-bold uppercase tracking-widest text-ink/70">Admit one</p>
+        <a 
+          href={registration.pass.qr} 
+          download={`${e.title.replace(/\s+/g, '-').toLowerCase()}-qr.png`}
+          className="w-full relative block group"
+          title="Download QR Code"
+        >
+          <img
+            src={registration.pass.qr}
+            alt={`QR pass for ${e.title}`}
+            className="w-full rounded-lg"
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+             <span className="text-white text-xs font-bold">Download</span>
+          </div>
+        </a>
+        <p className="text-[9px] font-bold uppercase tracking-widest text-ink/70 mt-1">Admit one</p>
       </div>
     </div>
   );

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/client.js";
 import { CategoryBadge, PageLoader, formatWhen } from "../components/ui.jsx";
+import { Avatar } from "../components/Avatar.jsx";
 
 export default function AdminPanel() {
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [pending, setPending] = useState([]);
   const [insights, setInsights] = useState([]);
@@ -13,10 +16,10 @@ export default function AdminPanel() {
 
   const load = () => {
     api.get("/admin/stats").then(setStats).catch(() => setStats({}));
-    api.get("/admin/pending-events").then((d) => setPending(d.events)).catch(() => {});
-    api.get("/admin/insights").then((d) => setInsights(d.insights)).catch(() => {});
-    api.get("/admin/heatmap").then(setHeatmap).catch(() => {});
-    api.get("/admin/users").then((d) => setUsers(d.users)).catch(() => {});
+    api.get("/admin/pending-events").then((d) => setPending(d.events)).catch(() => { });
+    api.get("/admin/insights").then((d) => setInsights(d.insights)).catch(() => { });
+    api.get("/admin/heatmap").then(setHeatmap).catch(() => { });
+    api.get("/admin/users").then((d) => setUsers(d.users)).catch(() => { });
   };
   useEffect(load, []);
 
@@ -28,14 +31,24 @@ export default function AdminPanel() {
   };
   const setRole = (id, role) =>
     api.put(`/admin/users/${id}/role`, { role }).then(load).catch((e) => setMsg(e.message));
+  const removeUser = (id, name) => {
+    if (!window.confirm(`Are you sure you want to remove ${name}?`)) return;
+    api.del(`/admin/users/${id}`).then(load).catch((e) => setMsg(e.message));
+  };
 
   if (!stats) return <PageLoader />;
 
   return (
     <div className="space-y-10">
-      <div>
-        <p className="eyebrow">Admin panel</p>
-        <h1 className="mt-1 text-3xl font-extrabold">Platform overview</h1>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Avatar src={user.profilePicture} name={user.name} className="h-20 w-20 text-3xl shadow-sm" />
+          <div>
+            <p className="eyebrow">Admin panel</p>
+            <h1 className="mt-1 text-3xl font-extrabold">Welcome, {user.name.split(" ")[0]}</h1>
+            <Link to="/profile" className="inline-block mt-1 text-xs text-violet2 hover:underline">Edit Profile</Link>
+          </div>
+        </div>
       </div>
       {msg && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{msg}</p>}
 
@@ -141,6 +154,8 @@ export default function AdminPanel() {
         </section>
       )}
 
+
+
       <section>
         <h2 className="text-xl font-bold">Users ({users.length})</h2>
         <ul className="mt-4 divide-y divide-ink/5 rounded-2xl bg-white shadow-card">
@@ -150,11 +165,14 @@ export default function AdminPanel() {
                 <p className="font-medium">{u.name}</p>
                 <p className="text-xs text-ink/50">{u.email} · {u.department} · engagement {u.engagementScore}</p>
               </div>
-              <select className="field !w-auto !py-1.5 text-xs" value={u.role} onChange={(e) => setRole(u._id, e.target.value)}>
-                <option value="student">student</option>
-                <option value="faculty">faculty</option>
-                <option value="admin">admin</option>
-              </select>
+              <div className="flex items-center gap-2">
+                <select className="field !w-auto !py-1.5 text-xs" value={u.role} onChange={(e) => setRole(u._id, e.target.value)}>
+                  <option value="student">student</option>
+                  <option value="faculty">faculty</option>
+                  <option value="admin">admin</option>
+                </select>
+                <button className="btn-danger !px-3 !py-1.5 text-xs" onClick={() => removeUser(u._id, u.name)}>Remove</button>
+              </div>
             </li>
           ))}
         </ul>

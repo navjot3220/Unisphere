@@ -11,6 +11,9 @@ import FacultyDashboard from "./pages/FacultyDashboard.jsx";
 import CreateEvent from "./pages/CreateEvent.jsx";
 import Attendance from "./pages/Attendance.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
+import CreateClub from "./pages/CreateClub.jsx";
+import ClubDetails from "./pages/ClubDetails.jsx";
+import ProfileSettings from "./pages/ProfileSettings.jsx";
 
 export default function App() {
   return (
@@ -24,6 +27,15 @@ export default function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/events/:id" element={<EventDetails />} />
           <Route path="/clubs" element={<Clubs />} />
+          <Route
+            path="/clubs/new"
+            element={
+              <Protected roles={["admin"]}>
+                <CreateClub />
+              </Protected>
+            }
+          />
+          <Route path="/clubs/:id" element={<ClubDetails />} />
           <Route
             path="/dashboard"
             element={
@@ -61,6 +73,14 @@ export default function App() {
             element={
               <Protected roles={["admin"]}>
                 <AdminPanel />
+              </Protected>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <Protected roles={["student", "faculty", "admin"]}>
+                <ProfileSettings />
               </Protected>
             }
           />

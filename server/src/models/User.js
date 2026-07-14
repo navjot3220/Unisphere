@@ -8,7 +8,12 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, select: false },
     role: { type: String, enum: ["student", "faculty", "admin"], default: "student" },
     department: { type: String, default: "General" },
-    interests: [{ type: String }], // category tags, e.g. "tech", "sports"
+    phone: { type: String, default: "" },
+    designation: { type: String, default: "" },
+    bio: { type: String, default: "" },
+    profilePicture: { type: String, default: "" },
+    academicYear: { type: String, default: "" },
+    interests: [{ type: String }], // category tags, e.g. "technology", "business"
     clubs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Club" }],
     engagementScore: { type: Number, default: 0 },
   },

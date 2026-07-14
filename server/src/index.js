@@ -15,6 +15,9 @@ import registrationRoutes from "./routes/registrations.js";
 import clubRoutes from "./routes/clubs.js";
 import recommendationRoutes from "./routes/recommendations.js";
 import adminRoutes from "./routes/admin.js";
+import notificationRoutes from "./routes/notifications.js";
+import uploadRoutes from "./routes/upload.js";
+import path from "path";
 
 const app = express();
 
@@ -25,6 +28,7 @@ app.use(
   })
 );
 app.use(express.json({ limit: "1mb" }));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(
   rateLimit({
     windowMs: 60 * 1000,
@@ -40,6 +44,8 @@ app.use("/api/registrations", registrationRoutes);
 app.use("/api/clubs", clubRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -6,10 +6,11 @@ const registrationSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     status: {
       type: String,
-      enum: ["registered", "checked_in", "cancelled"],
+      enum: ["registered", "checked_in", "checked_out", "cancelled"],
       default: "registered",
     },
     checkedInAt: { type: Date, default: null },
+    checkedOutAt: { type: Date, default: null },
     checkedInBy: { type: String, enum: ["qr", "manual", null], default: null },
   },
   { timestamps: true }

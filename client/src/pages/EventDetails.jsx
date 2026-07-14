@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client.js";
-import { CategoryBadge, EventCard, PageLoader, formatWhen } from "../components/ui.jsx";
+import { CategoryBadge, EventCard, PageLoader, formatWhen, getCoverImage } from "../components/ui.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function EventDetails() {
@@ -64,8 +64,15 @@ export default function EventDetails() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <div className="card">
-        <div className="flex items-center gap-2">
+      <div className="card !p-0 overflow-hidden">
+        <img 
+          src={getCoverImage(event.coverImage, event.category)} 
+          alt={event.title} 
+          className="h-48 w-full object-cover" 
+          onError={(e) => { e.target.onerror = null; e.target.src = getCoverImage(null, event.category); }}
+        />
+        <div className="p-6">
+          <div className="flex items-center gap-2">
           <CategoryBadge category={event.category} />
           {event.club?.name && <span className="text-xs text-ink/50">{event.club.name}</span>}
         </div>
@@ -108,9 +115,10 @@ export default function EventDetails() {
               Attendance & check-in
             </Link>
           )}
-          <span className={`text-sm font-semibold ${spotsLeft <= 5 ? "text-red-600" : "text-ink/50"}`}>
-            {event.registeredCount}/{event.capacity} registered
-          </span>
+            <span className={`text-sm font-semibold ${spotsLeft <= 5 ? "text-red-600" : "text-ink/50"}`}>
+              {event.registeredCount}/{event.capacity} registered
+            </span>
+          </div>
         </div>
       </div>
 

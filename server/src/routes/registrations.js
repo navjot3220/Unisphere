@@ -151,4 +151,27 @@ router.post("/check-in/manual/:registrationId", requireAuth, requireRole("facult
   }
 });
 
+// Manual check-out by registration id
+router.post("/check-out/manual/:registrationId", requireAuth, requireRole("faculty", "admin", "student"), async (req, res, next) => {
+  try {
+    const reg = await Registration.findById(req.params.registrationId)
+      .populate("user", "name")
+      .populate("event", "organizer");
+    if (!reg) return res.status(404).json({ error: "Registration not found." });
+    const isOwner = String(reg.event.organizer) === String(req.user._id);
+    if (!isOwner && req.user.role !== "admin") {
+      return res.status(403).json({ error: "Only this event's organizer or an admin can check people out." });
+    }
+    if (reg.status !== "checked_in") {
+      return res.status(409).json({ error: `${reg.user.name} is not checked in.` });
+    }
+    reg.status = "checked_out";
+    reg.checkedOutAt = new Date();
+    await reg.save();
+    res.json({ ok: true, attendee: reg.user.name });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

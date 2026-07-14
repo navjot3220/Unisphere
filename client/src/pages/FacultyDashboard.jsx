@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/client.js";
 import { CategoryBadge, EmptyState, PageLoader, formatWhen } from "../components/ui.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
+import { Avatar } from "../components/Avatar.jsx";
+import { ImageUpload } from "../components/ImageUpload.jsx";
 
 const STATUS_STYLES = {
   approved: "bg-leaf/10 text-leaf",
@@ -15,7 +17,7 @@ export default function FacultyDashboard() {
   const { user } = useAuth();
   const [events, setEvents] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [slotCategory, setSlotCategory] = useState("tech");
+  const [slotCategory, setSlotCategory] = useState("technology");
   const [slots, setSlots] = useState(null);
   const [club, setClub] = useState({ name: "", description: "", category: "general" });
   const [clubMsg, setClubMsg] = useState(null);
@@ -46,9 +48,13 @@ export default function FacultyDashboard() {
   return (
     <div className="space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">Coordinator dashboard</p>
-          <h1 className="mt-1 text-3xl font-extrabold">Welcome, {user.name.split(" ")[0]}</h1>
+        <div className="flex items-center gap-4">
+          <Avatar src={user.profilePicture} name={user.name} className="h-20 w-20 text-3xl shadow-sm" />
+          <div>
+            <p className="eyebrow">Coordinator dashboard</p>
+            <h1 className="mt-1 text-3xl font-extrabold">Welcome, {user.name.split(" ")[0]}</h1>
+            <Link to="/profile" className="inline-block mt-1 text-xs text-violet2 hover:underline">Edit Profile</Link>
+          </div>
         </div>
         <Link to="/events/new" className="btn-primary">+ Create event</Link>
       </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { ImageUpload } from "../components/ImageUpload.jsx";
 
 export default function CreateEvent() {
   const { user } = useAuth();
@@ -12,8 +13,8 @@ export default function CreateEvent() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
-    title: "", description: "", category: "tech", location: "",
-    startsAt: "", endsAt: "", capacity: 100, club: "",
+    title: "", description: "", category: "technology", location: "",
+    startsAt: "", endsAt: "", capacity: 100, club: "", coverImage: "",
   });
 
   useEffect(() => {
@@ -73,6 +74,10 @@ export default function CreateEvent() {
         <div>
           <label className="label">Description</label>
           <textarea className="field min-h-24" value={form.description} onChange={set("description")} />
+        </div>
+        <div>
+          <label className="label">Cover Image</label>
+          <ImageUpload value={form.coverImage} onChange={(val) => setForm({...form, coverImage: val})} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

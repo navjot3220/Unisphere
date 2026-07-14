@@ -30,16 +30,16 @@ export async function seedDatabase() {
     User.create({ name, email, password: "Password123", role, department, interests });
 
   const admin = await mk("Avery Admin", "admin@unisphere.dev", "admin", "Administration", []);
-  const faculty1 = await mk("Dr. Rhea Kapoor", "rhea@unisphere.dev", "faculty", "Computer Science", ["tech", "workshop"]);
-  const faculty2 = await mk("Prof. Dan Whitfield", "dan@unisphere.dev", "faculty", "Business", ["career", "social"]);
+  const faculty1 = await mk("Dr. Rhea Kapoor", "rhea@unisphere.dev", "faculty", "Computer Science", ["technology"]);
+  const faculty2 = await mk("Prof. Dan Whitfield", "dan@unisphere.dev", "faculty", "Business", ["business", "arts"]);
 
   const students = await Promise.all([
-    mk("Sam Chen", "sam@unisphere.dev", "student", "Computer Science", ["tech", "workshop"]),
-    mk("Priya Nair", "priya@unisphere.dev", "student", "Computer Science", ["tech", "cultural"]),
-    mk("Jordan Lee", "jordan@unisphere.dev", "student", "Business", ["career", "sports"]),
-    mk("Fatima Hassan", "fatima@unisphere.dev", "student", "Arts", ["arts", "cultural"]),
-    mk("Mike O'Brien", "mike@unisphere.dev", "student", "Kinesiology", ["sports", "social"]),
-    mk("Lena Petrova", "lena@unisphere.dev", "student", "Business", ["career", "tech"]),
+    mk("Sam Chen", "sam@unisphere.dev", "student", "Computer Science", ["technology"]),
+    mk("Priya Nair", "priya@unisphere.dev", "student", "Computer Science", ["technology", "arts"]),
+    mk("Jordan Lee", "jordan@unisphere.dev", "student", "Business", ["business"]),
+    mk("Fatima Hassan", "fatima@unisphere.dev", "student", "Arts", ["arts"]),
+    mk("Mike O'Brien", "mike@unisphere.dev", "student", "Business", ["business", "arts"]),
+    mk("Lena Petrova", "lena@unisphere.dev", "student", "Business", ["business", "technology"]),
   ]);
   const [sam, priya, jordan, fatima, mike, lena] = students;
   console.log(`[seed] users: ${students.length + 3}`);
@@ -48,14 +48,14 @@ export async function seedDatabase() {
   const codingClub = await Club.create({
     name: "Coding Club",
     description: "Weekly builds, hackathons, and tech talks.",
-    category: "tech",
+    category: "technology",
     coordinator: faculty1._id,
     members: [sam._id, priya._id, lena._id],
   });
   const bizSociety = await Club.create({
     name: "Business Society",
     description: "Networking nights, case competitions, career prep.",
-    category: "career",
+    category: "business",
     coordinator: faculty2._id,
     members: [jordan._id, lena._id],
   });
@@ -76,11 +76,11 @@ export async function seedDatabase() {
   // --- Past events (history feeds the AI: forecasts, smart slots, affinity) ---
   const past = [];
   const pastDefs = [
-    ["Intro to Git Workshop", "tech", codingClub, faculty1, -30, 17, 40],
-    ["Hack Night #4", "tech", codingClub, faculty1, -21, 18, 60],
-    ["Resume Clinic", "career", bizSociety, faculty2, -14, 14, 50],
+    ["Intro to Git Workshop", "technology", codingClub, faculty1, -30, 17, 40],
+    ["Hack Night #4", "technology", codingClub, faculty1, -21, 18, 60],
+    ["Resume Clinic", "business", bizSociety, faculty2, -14, 14, 50],
     ["Open Mic Evening", "arts", artsCollective, faculty2, -10, 19, 80],
-    ["Intramural Kickoff", "sports", null, faculty2, -7, 16, 100],
+    ["Cyber Security Seminar", "technology", codingClub, faculty1, -7, 16, 100],
   ];
   for (const [title, category, club, organizer, dayOffset, hour, capacity] of pastDefs) {
     const startsAt = daysFromNow(dayOffset, hour);
@@ -111,13 +111,13 @@ export async function seedDatabase() {
     });
   };
 
-  const hackathon = await up("Spring Hackathon", "24 hours. Teams of 4. Real prizes. Ship something.", "tech", codingClub, faculty1, 5, 9, 120, "Engineering Atrium");
-  const aiTalk = await up("AI in Industry: Guest Talk", "A senior ML engineer on what actually ships in production.", "tech", codingClub, faculty1, 3, 17, 80, "Lecture Hall B");
-  const careerFair = await up("Fall Career Fair Prep", "Portfolio reviews and mock interviews with alumni.", "career", bizSociety, faculty2, 7, 13, 60, "Business Building 204");
+  const hackathon = await up("Spring Hackathon", "24 hours. Teams of 4. Real prizes. Ship something.", "technology", codingClub, faculty1, 5, 9, 120, "Engineering Atrium");
+  const aiTalk = await up("AI in Industry: Guest Talk", "A senior ML engineer on what actually ships in production.", "technology", codingClub, faculty1, 3, 17, 80, "Lecture Hall B");
+  const careerFair = await up("Fall Career Fair Prep", "Portfolio reviews and mock interviews with alumni.", "business", bizSociety, faculty2, 7, 13, 60, "Business Building 204");
   const galleryNight = await up("Student Gallery Night", "One night. Forty artists. Free entry with your pass.", "arts", artsCollective, faculty2, 6, 19, 100, "Fine Arts Gallery");
-  const yogaSession = await up("Sunrise Yoga on the Quad", "All levels. Mats provided. Bring water.", "sports", null, faculty2, 2, 7, 40, "Central Quad");
-  await up("Robotics Demo Day", "Student-built robots, live obstacle course.", "workshop", codingClub, sam, 9, 15, 70, "Maker Lab", "pending");
-  await up("Culture Fest Planning Meetup", "Help plan the biggest cultural event of the term.", "cultural", artsCollective, fatima, 4, 18, 30, "Student Centre 12", "pending");
+  const yogaSession = await up("Startup Pitch Competition", "Pitch your startup idea to a panel of judges.", "business", bizSociety, faculty2, 2, 17, 40, "Auditorium A");
+  await up("Robotics Demo Day", "Student-built robots, live obstacle course.", "technology", codingClub, sam, 9, 15, 70, "Maker Lab", "pending");
+  await up("Culture Fest Planning Meetup", "Help plan the biggest cultural event of the term.", "arts", artsCollective, fatima, 4, 18, 30, "Student Centre 12", "pending");
   console.log("[seed] events: 12 (5 past, 5 approved upcoming, 2 pending)");
 
   // --- Registrations + check-ins (history) ---

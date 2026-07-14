@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
 import { api } from "../api/client.js";
 import { PageLoader } from "../components/ui.jsx";
+import { Avatar } from "../components/Avatar.jsx";
 
 export default function Attendance() {
   const { id } = useParams();
@@ -63,11 +64,22 @@ export default function Attendance() {
     }
   };
 
-  const manual = async (registrationId) => {
+  const manualCheckIn = async (registrationId) => {
     setScanMsg(null);
     try {
       const d = await api.post(`/registrations/check-in/manual/${registrationId}`);
-      setScanMsg({ ok: true, text: `✓ ${d.attendee} checked in manually.` });
+      setScanMsg({ ok: true, text: `✓ ${d.attendee} checked in.` });
+      load();
+    } catch (err) {
+      setScanMsg({ ok: false, text: err.message });
+    }
+  };
+
+  const manualCheckOut = async (registrationId) => {
+    setScanMsg(null);
+    try {
+      const d = await api.post(`/registrations/check-out/manual/${registrationId}`);
+      setScanMsg({ ok: true, text: `✓ ${d.attendee} checked out.` });
       load();
     } catch (err) {
       setScanMsg({ ok: false, text: err.message });
@@ -113,27 +125,65 @@ export default function Attendance() {
         )}
       </div>
 
-      <div className="card !p-0">
-        <h2 className="px-5 pt-4 font-display font-bold">Registered ({registrations.length})</h2>
-        <ul className="mt-2 divide-y divide-ink/5">
-          {registrations.map((r) => (
-            <li key={r._id} className="flex items-center justify-between px-5 py-3 text-sm">
-              <div>
-                <p className="font-medium">{r.user?.name}</p>
-                <p className="text-xs text-ink/50">{r.user?.department} · {r.user?.email}</p>
-              </div>
-              {r.status === "checked_in" ? (
-                <span className="font-semibold text-leaf">
-                  ✓ {r.checkedInBy === "qr" ? "QR" : "Manual"}
-                </span>
-              ) : (
-                <button className="btn-ghost !px-3 !py-1.5 text-xs" onClick={() => manual(r._id)}>
-                  Check in
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+      <div className="card !p-0 overflow-hidden">
+        <h2 className="px-5 pt-4 pb-2 font-display font-bold">Registered ({registrations.length})</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-ink/5 text-ink/60 border-b border-ink/10">
+              <tr>
+                <th className="px-5 py-3 font-semibold">Student</th>
+                <th className="px-5 py-3 font-semibold">Department</th>
+                <th className="px-5 py-3 font-semibold">Registration</th>
+                <th className="px-5 py-3 font-semibold">Attendance</th>
+                <th className="px-5 py-3 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink/5">
+              {registrations.map((r) => (
+                <tr key={r._id} className="hover:bg-ink/5 transition-colors">
+                  <td className="px-5 py-3 flex items-center gap-3">
+                    <Avatar src={r.user?.profilePicture} name={r.user?.name} className="h-8 w-8 text-xs" />
+                    <div>
+                      <p className="font-medium text-ink">{r.user?.name}</p>
+                      <p className="text-[10px] text-ink/50">{r.user?.email}</p>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-ink/70">{r.user?.department}</td>
+                  <td className="px-5 py-3 text-ink/70 capitalize">{r.status === "cancelled" ? "Cancelled" : "Registered"}</td>
+                  <td className="px-5 py-3">
+                    {r.status === "checked_in" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-leaf">
+                        Checked In
+                      </span>
+                    ) : r.status === "checked_out" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink/50">
+                        Checked Out
+                      </span>
+                    ) : (
+                      <span className="text-xs text-ink/40">Pending</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    {r.status === "registered" ? (
+                      <button className="btn-ghost !px-3 !py-1 text-xs" onClick={() => manualCheckIn(r._id)}>
+                        Check in
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => r.status === "checked_in" ? manualCheckOut(r._id) : manualCheckIn(r._id)}
+                        className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-all hover:scale-110 active:scale-95 ${r.status === 'checked_in' ? 'bg-leaf text-white' : 'bg-ink/10 text-ink/50'}`}
+                        title={r.status === "checked_in" ? "Mark as Checked Out" : "Mark as Checked In"}
+                      >
+                        ✓
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {registrations.length === 0 && <p className="px-5 py-8 text-center text-ink/50">No registrations yet.</p>}
+        </div>
       </div>
     </div>
   );

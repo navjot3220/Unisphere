@@ -55,4 +55,31 @@ router.get("/me", requireAuth, async (req, res) => {
   res.json({ user: populated.toSafeJSON() });
 });
 
+router.put("/me", requireAuth, async (req, res, next) => {
+  try {
+    const { name, email, phone, bio, department, academicYear, designation, profilePicture } = req.body;
+    
+    if (email && email !== req.user.email) {
+      const existing = await User.findOne({ email });
+      if (existing) return res.status(409).json({ error: "Email is already in use by another account." });
+      req.user.email = email;
+    }
+
+    if (name !== undefined) req.user.name = name;
+    if (phone !== undefined) req.user.phone = phone;
+    if (bio !== undefined) req.user.bio = bio;
+    if (department !== undefined) req.user.department = department;
+    if (academicYear !== undefined) req.user.academicYear = academicYear;
+    if (designation !== undefined) req.user.designation = designation;
+    if (profilePicture !== undefined) req.user.profilePicture = profilePicture;
+
+    await req.user.save();
+    
+    const populated = await req.user.populate("clubs", "name category");
+    res.json({ user: populated.toSafeJSON() });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

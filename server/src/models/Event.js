@@ -1,14 +1,9 @@
 import mongoose from "mongoose";
 
 export const EVENT_CATEGORIES = [
-  "tech",
-  "cultural",
-  "sports",
-  "academic",
-  "career",
+  "technology",
+  "business",
   "arts",
-  "social",
-  "workshop",
 ];
 
 const eventSchema = new mongoose.Schema(
@@ -16,6 +11,7 @@ const eventSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
     category: { type: String, enum: EVENT_CATEGORIES, required: true },
+    coverImage: { type: String, default: "" },
     location: { type: String, required: true },
     startsAt: { type: Date, required: true },
     endsAt: { type: Date, required: true },
