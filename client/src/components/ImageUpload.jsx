@@ -30,7 +30,9 @@ export function ImageUpload({ value, onChange, className = "" }) {
     try {
       // Direct fetch to avoid standard JSON api wrapper constraints for FormData
       const token = localStorage.getItem("unisphere_token");
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/upload`, {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+      const res = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`
