@@ -21,7 +21,11 @@ import path from "path";
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN?.split(",") || "http://localhost:5173",
